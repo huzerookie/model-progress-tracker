@@ -20,14 +20,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(Customizer.withDefaults()).csrf().disable()
-            .authorizeHttpRequests()
+    	http
+        .csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/api/auth/**").hasRole("ADMIN")
-            .requestMatchers("/api/user/**").hasAnyRole("USER","ADMIN")
+            .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
             .anyRequest().authenticated()
-            .and().httpBasic();
-        return http.build();
+        )
+        .httpBasic(Customizer.withDefaults());
+
+    return http.build();
     }
 
     @Bean
@@ -43,13 +47,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("*")); // ✅ use patterns instead of addAllowedOrigin("*")
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("**", config);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 }
